@@ -32,10 +32,8 @@ SmartHealth is an advanced AI-powered medical report analysis platform that help
 cd C:\Users\aksh3\Documents\AI_Sheild_Health
 ```
 
-2. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
+2. **Install prerequisites**
+
 
 3. **Run the application**
 ```bash
