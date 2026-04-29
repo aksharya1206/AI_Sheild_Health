@@ -1,3 +1,4 @@
+
 # SmartHealth AI Medical Report Analyzer
 
 ## 📋 Overview
@@ -363,3 +364,6 @@ For issues or questions:
 **Last Updated:** April 2026  
 **Version:** 1.0  
 **Status:** Production Ready
+# AI_Sheild_Health
+AI Health Shield is an AI-powered healthcare platform that analyzes medical reports, provides easy-to-understand health insights, recommends doctors, and offers patient and doctor dashboards for smarter, faster, and more accessible healthcare decisions.
+e6bcc7261e5a5c40defcb79a0db3fef8128cac63
