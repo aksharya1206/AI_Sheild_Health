@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Health Agent - Intelligent Healthcare Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        :root {
+            --primary: #00d4aa;
+            --primary-dark: #00a884;
+            --secondary: #6366f1;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --text-light: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--secondary));
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .agent-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Chat Section */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 16px 20px;
+            border-radius: 16px;
+            line-height: 1.6;
+        }
+
+        .message.user {
+            background: var(--secondary);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.agent {
+            background: var(--bg-input);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message .thinking {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .message .action-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--bg-dark);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: var(--bg-input);
+            border-radius: 12px;
+            margin-top: 16px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 14px 18px;
+            border-radius: 10px;
+            color: var(--text-light);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input input:focus {
+            border-color: var(--primary);
+        }
+
+        .chat-input button {
+            background: var(--primary);
+            color: var(--bg-dark);
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+        .chat-input button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .chat-input button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quick-action {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .quick-action:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .quick-action h4 {
+            color: var(--primary);
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+        }
+
+        .quick-action p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Tools Panel */
+        .tools-panel h3 {
+            font-size: 1rem;
+            margin-bottom: 16px;
+            color: var(--text-muted);
+        }
+
+        .tool-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tool-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-input);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .tool-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Patient Info */
+        .patient-info {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg-input);
+            border-radius: 12px;
+        }
+
+        .patient-info input {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: var(--text-light);
+            margin-bottom: 10px;
+            outline: none;
+        }
+
+        .patient-info input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* Actions Log */
+        .actions-log {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--bg-input);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .action-item .icon {
+            width: 24px;
+            height: 24px;
+            background: var(--success);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* File Upload */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 16px;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(0, 212, 170, 0.1);
+        }
+
+        .upload-zone input {
+            display: none;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: var(--bg-input);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: var(--bg-dark);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <span>🏥</span>
+                AI Health Agent
+            </h1>
+            <div class="agent-status">
+                <span class="status-dot"></span>
+                <span>Agent Ready</span>
+            </div>
+        </header>
+
+        <div class="main-grid">
+            <!-- Main Chat Area -->
+            <div class="card">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('chat')">💬 Chat</button>
+                    <button class="tab" onclick="switchTab('upload')">📄 Upload Report</button>
+                    <button class="tab" onclick="switchTab('symptoms')">🩺 Symptoms</button>
+                </div>
+
+                <!-- Chat Tab -->
+                <div id="chat-tab" class="tab-content active">
+                    <h2>🤖 Your Healthcare Assistant</h2>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message agent">
+                                <div class="action-badge">AI Agent</div>
+                                Hello! I'm your AI Healthcare Agent. I can help you with:
+                                <ul style="margin-top: 10px; margin-left: 20px;">
+                                    <li>Analyzing medical reports</li>
+                                    <li>Checking symptoms and predicting conditions</li>
+                                    <li>Finding the right specialists</li>
+                                    <li>Scheduling appointments</li>
+                                    <li>Providing health advice</li>
+                                </ul>
+                                <p style="margin-top: 15px;">How can I help you today?</p>
+                            </div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="userInput" placeholder="Ask me anything about your health..." onkeypress="handleKeyPress(event)">
+                            <button onclick="sendMessage()" id="sendBtn">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Tab -->
+                <div id="upload-tab" class="tab-content">
+                    <h2>📄 Medical Report Analysis</h2>
+                    <div class="upload-zone" onclick="document.getElementById('reportFile').click()">
+                        <input type="file" id="reportFile" accept=".pdf,.txt" onchange="handleFileUpload(event)">
+                        <p style="font-size: 1.2rem; margin-bottom: 8px;">📁 Click to upload medical report</p>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Supports PDF and text files</p>
+                    </div>
+                    <div id="uploadStatus"></div>
+                </div>
+
+                <!-- Symptoms Tab -->
+                <div id="symptoms-tab" class="tab-content">
+                    <h2>🩺 Symptom Checker</h2>
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px; color: var(--text-muted);">Enter your symptoms (comma separated):</label>
+                        <input type="text" id="symptomsInput" placeholder="e.g., fever, cough, headache" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border); padding: 14px; border-radius: 10px; color: var(--text-light); outline: none;">
+                    </div>
+                    <button onclick="analyzeSymptoms()" style="background: var(--primary); color: var(--bg-dark); border: none; padding: 14px 28px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%;">Analyze Symptoms</button>
+                    <div id="symptomsResult" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <div class="card" style="margin-bottom: 20px;">
+                    <h2>👤 Patient Info</h2>
+                    <div class="patient-info">
+                        <input type="text" id="patientName" placeholder="Your Name">
+                        <input type="text" id="patientId" placeholder="Patient ID (optional)">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>⚡ Quick Actions</h2>
+                    <div class="quick-actions">
+                        <div class="quick-action" onclick="quickAction('I have a medical report to analyze')">
+                            <h4>📄 Analyze Report</h4>
+                            <p>Upload and analyze medical reports</p>
+                        </div>
+                        <div class="quick-action" onclick="quickAction('Check my symptoms')">
+                            <h4>🩺 Check Symptoms</h4>
+                            <p>Analyze what you might be feeling</p>
+                        </div>
+                        <div class="quick-action" onclick="quickAction('Find me a doctor')">
+                            <h4>👨‍⚕️ Find Doctor</h4>
+                            <p>Get specialist recommendations</p>
+                        </div>
+                        <div class="quick-action" onclick="quickAction('I need health advice')">
+                            <h4>💊 Get Advice</h4>
+                            <p>Personalized health recommendations</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h2>🛠️ Agent Tools</h2>
+                    <div class="tools-panel">
+                        <div class="tool-list">
+                            <div class="tool-item">
+                                <div class="tool-icon">📊</div>
+                                <span>Report Analysis</span>
+                            </div>
+                            <div class="tool-item">
+                                <div class="tool-icon">🔍</div>
+                                <span>Symptom Checker</span>
+                            </div>
+                            <div class="tool-item">
+                                <div class="tool-icon">👨‍⚕️</div>
+                                <span>Doctor Finder</span>
+                            </div>
+                            <div class="tool-item">
+                                <div class="tool-icon">📅</div>
+                                <span>Appointments</span>
+                            </div>
+                            <div class="tool-item">
+                                <div class="tool-icon">💡</div>
+                                <span>Health Advice</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h2>📋 Actions Log</h2>
+                    <div class="actions-log" id="actionsLog">
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">No actions yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        // Chat functions
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+
+            // Show loading
+            const loadingMsg = addMessage('', 'agent', true);
+
+            // Send to agent
+            fetch('/api/agent/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: message,
+                    patient_id: document.getElementById('patientId').value || 'guest',
+                    patient_name: document.getElementById('patientName').value || 'Guest',
+                    context: {}
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                loadingMsg.remove();
+                
+                if (data.success) {
+                    addMessage(data.message, 'agent', false, data.actions_taken);
+                    updateActionsLog(data.actions_taken);
+                } else {
+                    addMessage('Sorry, I encountered an error. Please try again.', 'agent');
+                }
+            })
+            .catch(err => {
+                loadingMsg.remove();
+                addMessage('Connection error. Please make sure the server is running.', 'agent');
+            });
+        }
+
+        function addMessage(text, sender, isLoading = false, actions = []) {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = `message ${sender}`;
+            
+            if (isLoading) {
+                div.innerHTML = `
+                    <div class="loading">
+                        <div class="loading-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span>Agent is thinking...</span>
+                    </div>
+                `;
+            } else {
+                let actionsHtml = '';
+                if (actions && actions.length > 0) {
+                    actionsHtml = '<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">';
+                    actions.forEach(action => {
+                        actionsHtml += `<div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">
+                            ✓ Used: ${action.action}
+                        </div>`;
+                    });
+                    actionsHtml += '</div>';
+                }
+                div.innerHTML = `<div class="action-badge">${sender === 'user' ? 'You' : 'AI Agent'}</div>${text}${actionsHtml}`;
+            }
+            
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return div;
+        }
+
+        function quickAction(message) {
+            document.getElementById('userInput').value = message;
+            switchTab('chat');
+            document.getElementById('chat-tab').classList.add('active');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            sendMessage();
+        }
+
+        function updateActionsLog(actions) {
+            if (!actions || actions.length === 0) return;
+            
+            const log = document.getElementById('actionsLog');
+            log.innerHTML = '';
+            
+            actions.forEach(action => {
+                const item = document.createElement('div');
+                item.className = 'action-item';
+                item.innerHTML = `
+                    <div class="icon">✓</div>
+                    <span><strong>${action.action}</strong></span>
+                `;
+                log.appendChild(item);
+            });
+        }
+
+        // File upload
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('uploadStatus');
+            status.innerHTML = '<div class="loading"><div class="loading-dots"><span></span><span></span><span></span></div><span>Analyzing report...</span></div>';
+
+            const formData = new FormData();
+            formData.append('report', file);
+            formData.append('patient_id', document.getElementById('patientId').value || 'guest');
+            formData.append('patient_name', document.getElementById('patientName').value || 'Guest');
+
+            fetch('/api/agent/analyze', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    status.innerHTML = `
+                        <div style="background: var(--bg-input); padding: 16px; border-radius: 12px; margin-top: 12px;">
+                            <h4 style="color: var(--success); margin-bottom: 12px;">✓ Analysis Complete</h4>
+                            <div style="max-height: 300px; overflow-y: auto; white-space: pre-wrap; line-height: 1.6;">${data.analysis}</div>
+                        </div>
+                    `;
+                    addMessage(`Analyzed report: ${file.name}`, 'user');
+                    addMessage(data.analysis, 'agent', false, data.actions_taken);
+                } else {
+                    status.innerHTML = `<p style="color: var(--error);">Error: ${data.error}</p>`;
+                }
+            })
+            .catch(err => {
+                status.innerHTML = `<p style="color: var(--error);">Upload failed: ${err}</p>`;
+            });
+        }
+
+        // Symptoms analysis
+        function analyzeSymptoms() {
+            const symptoms = document.getElementById('symptomsInput').value.trim();
+            if (!symptoms) {
+                alert('Please enter symptoms');
+                return;
+            }
+
+            const resultDiv = document.getElementById('symptomsResult');
+            resultDiv.innerHTML = '<div class="loading"><div class="loading-dots"><span></span><span></span><span></span></div><span>Analyzing symptoms...</span></div>';
+
+            fetch('/api/agent/symptoms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    symptoms: symptoms.split(',').map(s => s.trim()),
+                    patient_id: document.getElementById('patientId').value || 'guest',
+                    patient_name: document.getElementById('patientName').value || 'Guest'
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div style="background: var(--bg-input); padding: 16px; border-radius: 12px;">
+                            <h4 style="color: var(--primary); margin-bottom: 12px;">✓ Analysis Complete</h4>
+                            <div style="white-space: pre-wrap; line-height: 1.6;">${data.result}</div>
+                        </div>
+                    `;
+                    addMessage(`Symptoms: ${symptoms}`, 'user');
+                    addMessage(data.result, 'agent', false, data.actions_taken);
+                } else {
+                    resultDiv.innerHTML = `<p style="color: var(--error);">Error: ${data.error}</p>`;
+                }
+            })
+            .catch(err => {
+                resultDiv.innerHTML = `<p style="color: var(--error);">Analysis failed: ${err}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>

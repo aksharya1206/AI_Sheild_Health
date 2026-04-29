@@ -227,5 +227,192 @@ def get_doctor_reports():
     return jsonify({'reports': reports})
 
 
+# ========== AGENTIC AI ROUTES ==========
+
+@app.route('/agent-dashboard')
+def agent_dashboard():
+    """Agentic AI Healthcare Assistant Dashboard"""
+    return render_template('agent_dashboard.html')
+
+
+@app.route('/api/agent/chat', methods=['POST'])
+def agent_chat():
+    """
+    Main agentic AI endpoint - processes user requests through the agent
+    """
+    from healthcare_agent import HealthcareAgent, register_tools
+    from agent_tools import AGENT_TOOLS
+    
+    data = request.json
+    user_message = data.get('message', '')
+    patient_id = data.get('patient_id', 'guest')
+    patient_name = data.get('patient_name', 'Guest User')
+    context = data.get('context', {})
+    
+    # Create agent and register tools
+    agent = HealthcareAgent()
+    register_tools(agent, AGENT_TOOLS)
+    
+    # Set patient context
+    agent.set_context(
+        patient_id=patient_id,
+        name=patient_name,
+        symptoms=context.get('symptoms', [])
+    )
+    
+    # Execute the request through the agent
+    result = agent.execute_plan(user_message)
+    
+    return jsonify({
+        'success': result['success'],
+        'message': result.get('final_result', result.get('message', '')),
+        'actions_taken': result.get('actions_taken', []),
+        'agent_state': agent.get_status()
+    })
+
+
+@app.route('/api/agent/analyze', methods=['POST'])
+def agent_analyze():
+    """
+    Agent-powered medical report analysis with reasoning
+    """
+    from healthcare_agent import HealthcareAgent, register_tools
+    from agent_tools import analyze_report_tool, provide_advice_tool, find_doctors_tool
+    
+    if 'report' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['report']
+    patient_id = request.form.get('patient_id', 'guest')
+    patient_name = request.form.get('patient_name', 'Guest')
+    
+    # Save uploaded file
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(filepath)
+    
+    # Create agent with tools
+    agent = HealthcareAgent()
+    register_tools(agent, {
+        'analyze_report': analyze_report_tool,
+        'provide_advice': provide_advice_tool,
+        'find_doctors': find_doctors_tool
+    })
+    
+    agent.set_context(patient_id=patient_id, name=patient_name)
+    
+    # Execute analysis through agent
+    result = agent.execute_plan(
+        f"Please analyze the medical report at {filepath} and provide recommendations"
+    )
+    
+    return jsonify({
+        'success': result['success'],
+        'analysis': result.get('final_result', ''),
+        'actions_taken': result.get('actions_taken', []),
+        'filename': filename
+    })
+
+
+@app.route('/api/agent/symptoms', methods=['POST'])
+def agent_symptoms():
+    """
+    Agent-powered symptom analysis with intelligent recommendations
+    """
+    from healthcare_agent import HealthcareAgent, register_tools
+    from agent_tools import check_symptoms_tool, find_doctors_tool, provide_advice_tool
+    
+    data = request.json
+    symptoms = data.get('symptoms', [])
+    patient_id = data.get('patient_id', 'guest')
+    patient_name = data.get('patient_name', 'Guest')
+    
+    if not symptoms:
+        return jsonify({'error': 'No symptoms provided'}), 400
+    
+    # Create agent with tools
+    agent = HealthcareAgent()
+    register_tools(agent, {
+        'check_symptoms': check_symptoms_tool,
+        'find_doctors': find_doctors_tool,
+        'provide_advice': provide_advice_tool
+    })
+    
+    agent.set_context(
+        patient_id=patient_id,
+        name=patient_name,
+        symptoms=symptoms
+    )
+    
+    # Execute symptom analysis through agent
+    result = agent.execute_plan(
+        f"Analyze these symptoms: {', '.join(symptoms)}. Find possible conditions, recommend doctors, and provide advice."
+    )
+    
+    return jsonify({
+        'success': result['success'],
+        'result': result.get('final_result', ''),
+        'actions_taken': result.get('actions_taken', []),
+        'symptoms': symptoms
+    })
+
+
+@app.route('/api/agent/appointment', methods=['POST'])
+def agent_schedule_appointment():
+    """
+    Agent-powered appointment scheduling with intelligent doctor selection
+    """
+    from healthcare_agent import HealthcareAgent, register_tools
+    from agent_tools import find_doctors_tool, schedule_appointment_tool
+    
+    data = request.json
+    condition = data.get('condition', '')
+    specialty = data.get('specialty', '')
+    patient_name = data.get('patient_name', 'Guest')
+    preferred_date = data.get('date')
+    preferred_time = data.get('time')
+    
+    # Create agent with tools
+    agent = HealthcareAgent()
+    register_tools(agent, {
+        'find_doctors': find_doctors_tool,
+        'schedule_appointment': schedule_appointment_tool
+    })
+    
+    agent.set_context(patient_id=data.get('patient_id', 'guest'), name=patient_name)
+    
+    # Execute appointment scheduling through agent
+    result = agent.execute_plan(
+        f"Find a {specialty or 'appropriate'} doctor for {condition or 'general consultation'} "
+        f"and schedule an appointment for {patient_name} on {preferred_date or 'any available date'}"
+    )
+    
+    return jsonify({
+        'success': result['success'],
+        'result': result.get('final_result', ''),
+        'actions_taken': result.get('actions_taken', [])
+    })
+
+
+@app.route('/api/agent/status', methods=['GET'])
+def agent_status():
+    """Get agent status and capabilities"""
+    from agent_tools import get_tool_definitions
+    
+    return jsonify({
+        'status': 'ready',
+        'model': 'llama3.2',
+        'tools': get_tool_definitions(),
+        'capabilities': [
+            'Medical Report Analysis',
+            'Symptom Analysis & Disease Prediction',
+            'Doctor Recommendation',
+            'Appointment Scheduling',
+            'Health Advice Generation',
+            'Patient History Management'
+        ]
+    })
+
+
 if __name__ == "__main__":
     app.run(debug=True)
