@@ -1,0 +1,8 @@
+fever,cough,fatigue,headache,bodypain,disease
+1,1,1,0,1,Flu
+1,0,1,1,1,Viral Fever
+0,1,0,0,0,Cold
+0,0,0,0,0,Healthy
+1,1,0,1,1,Dengue
+1,0,1,0,1,Typhoid
+0,1,1,0,0,Allergy

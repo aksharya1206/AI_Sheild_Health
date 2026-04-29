@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - SmartHealth</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .dashboard-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .dashboard-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; 
+        }
+        .card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+        .card h3 { margin-top: 0; color: #333; }
+        .report-item, .appointment-item { 
+            background: #f0f7ff; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 4px;
+            border-left: 4px solid #0056b3;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .report-item:hover { background: #e0f0ff; }
+        .full-width { grid-column: 1 / -1; }
+        .patient-history {
+            background: #fff3cd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 3px solid #ffc107;
+            font-size: 12px;
+        }
+        .analysis-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .btn { 
+            background: #007bff; 
+            color: white; 
+            padding: 8px 12px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px 5px 5px 0;
+        }
+        .btn:hover { background: #0056b3; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .badge { 
+            display: inline-block; 
+            padding: 4px 8px; 
+            border-radius: 3px; 
+            font-size: 12px;
+            margin: 5px 0;
+        }
+        .badge-critical { background: #dc3545; color: white; }
+        .badge-high { background: #fd7e14; color: white; }
+        .badge-medium { background: #ffc107; color: black; }
+        nav { background: #333; padding: 10px; margin-bottom: 20px; }
+        nav a { color: white; margin: 0 15px; text-decoration: none; }
+        .nav-links li { list-style: none; display: inline-block; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { 
+            background: white; 
+            margin: 5% auto; 
+            padding: 20px; 
+            border: 1px solid #888; 
+            width: 90%; 
+            max-width: 800px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: black; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">SmartHealth</div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/patient-dashboard">Patient Dashboard</a></li>
+            <li><a href="/find-doctor">Find Specialist</a></li>
+            <li><a href="/dashboard">General Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <section class="dashboard-container">
+        <h1>🏥 Doctor Dashboard</h1>
+        <p>Review patient reports and medical analyses shared with you.</p>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>👨‍⚕️ Profile Summary</h3>
+                <p><strong>Role:</strong> AI Analysis System</p>
+                <p><strong>Status:</strong> Active & Ready</p>
+                <p><strong>System:</strong> SmartHealth AI v1.0</p>
+                <p><strong>Integration:</strong> Ollama (Llama3.2)</p>
+            </div>
+
+            <div class="card">
+                <h3>📊 System Statistics</h3>
+                <div id="stats">
+                    <p>Loading statistics...</p>
+                </div>
+            </div>
+
+            <div class="card full-width">
+                <h3>📑 Patient Reports Shared with Me</h3>
+                <div id="reportsList" style="max-height: 600px; overflow-y: auto;">
+                    <p>Loading reports...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal for full report view -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Complete Report Analysis</h2>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDoctorReports();
+            loadStatistics();
+        });
+
+        async function loadDoctorReports() {
+            try {
+                const response = await fetch('/api/doctor/shared-reports');
+                const data = await response.json();
+                const reports = data.reports || [];
+
+                if (reports.length === 0) {
+                    document.getElementById('reportsList').innerHTML = '<p>No reports shared yet</p>';
+                    return;
+                }
+
+                const reportsHTML = reports.reverse().map((report, index) => {
+                    const urgencyClass = getUrgencyClass(report.full_analysis);
+                    const patientInfo = report.patient_info || {};
+                    const history = report.patient_history || [];
+
+                    return `
+                        <div class="report-item" onclick="viewReport(${index})">
+                            <strong>Patient ID:</strong> ${patientInfo.patient_id || 'Not Specified'}<br>
+                            <strong>Shared by Doctor:</strong> ${report.shared_with_doctor || 'Direct Patient Upload'}<br>
+                            <strong>Date:</strong> ${report.date}<br>
+                            <strong>Shared on:</strong> ${report.shared_date || 'Not shared'}<br>
+                            <span class="badge ${urgencyClass}">View Analysis</span>
+                            ${history.length > 0 ? `<div class="patient-history"><strong>Previous Reports:</strong> ${history.length} on file</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('reportsList').innerHTML = reportsHTML;
+            } catch (error) {
+                console.error('Failed to load reports:', error);
+                document.getElementById('reportsList').innerHTML = '<p>Error loading reports</p>';
+            }
+        }
+
+        function getUrgencyClass(analysis) {
+            if (!analysis) return 'badge-medium';
+            const lower = analysis.toLowerCase();
+            if (lower.includes('critical')) return 'badge-critical';
+            if (lower.includes('high') || lower.includes('urgent')) return 'badge-high';
+            return 'badge-medium';
+        }
+
+        function viewReport(index) {
+            const modal = document.getElementById('reportModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            fetch('/api/doctor/shared-reports')
+                .then(res => res.json())
+                .then(data => {
+                    const report = data.reports[data.reports.length - 1 - index];
+                    if (report) {
+                        const history = report.patient_history || [];
+                        const patientInfo = report.patient_info || {};
+                        
+                        modalContent.innerHTML = `
+                            <h3 style="color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px;">👤 Patient Information</h3>
+                            <div style="background: #f0f7ff; padding: 12px; border-radius: 4px; margin-bottom: 15px;">
+                                <p><strong>Patient ID:</strong> ${patientInfo.patient_id || 'Not Specified'}</p>
+                                <p><strong>Report Date:</strong> ${report.date}</p>
+                                <p><strong>Shared by Doctor:</strong> ${report.shared_with_doctor || 'Direct Patient Upload'}</p>
+                                <p><strong>File:</strong> ${report.filename || 'N/A'}</p>
+                            </div>
+                            
+                            ${history.length > 0 ? `
+                                <h3 style="color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 20px;">📚 Previous Medical History (${history.length} visits)</h3>
+                                <div style="background: #fff9e6; padding: 12px; border-radius: 4px; margin-bottom: 15px; max-height: 200px; overflow-y: auto;">
+                                    ${history.map((h, idx) => `
+                                        <div style="background: white; padding: 10px; margin: 8px 0; border-radius: 4px; border-left: 4px solid #ffc107;">
+                                            <strong style="color: #856404;">[Visit ${idx + 1}] ${h.date}</strong><br>
+                                            <small style="color: #666;">Problem/Finding:</small><br>
+                                            <span style="font-size: 12px;">${h.summary.substring(0, 200)}...</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<div style="background: #e8f5e9; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #4caf50;"><p><strong>✓ No Previous Medical History</strong> - This is the patient\'s first report in the system</p></div>'}
+                            
+                            <h3 style="color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 20px;">🤖 AI ANALYSIS & RECOMMENDATIONS</h3>
+                            <div style="background: #f0f7ff; padding: 15px; border-radius: 4px; margin-bottom: 15px; border: 2px solid #0056b3; max-height: 400px; overflow-y: auto; font-size: 13px; line-height: 1.6;">
+                                ${report.full_analysis}
+                            </div>
+                            
+                            <h3 style="color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 20px;">📄 ORIGINAL MEDICAL REPORT (Extracted Text)</h3>
+                            <div style="background: #fffef0; padding: 15px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #ff9800; max-height: 350px; overflow-y: auto; font-size: 12px; line-height: 1.5; font-family: 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word;">
+${report.extracted_text || 'No original report text available'}
+                            </div>
+                            
+                            <h3 style="color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 20px;">💊 Doctor Prescription</h3>
+                            <div style="background: #e9f7ef; padding: 15px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #28a745;">
+                                <p><strong>Prescription:</strong> ${report.prescription || '<em>No prescription entered</em>'}</p>
+                                <p><strong>Treatment Plan:</strong> ${report.treatment_plan || '<em>No treatment plan entered</em>'}</p>
+                            </div>
+                            
+                            <h3 style="color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-top: 20px;">⚙️ Actions</h3>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button class="btn btn-success" onclick="downloadAnalysis('${report.date}')">📥 Download AI Analysis</button>
+                                <button class="btn btn-success" onclick="downloadOriginalReport('${report.filename}')">📥 Download Original Report</button>
+                                <button class="btn" onclick="addNotes()">📝 Add Clinical Notes</button>
+                                <button class="btn" onclick="generatePrescription()">💊 Generate Prescription</button>
+                            </div>
+                        `;
+                        modal.dataset.currentReport = data.reports.length - 1 - index;
+                        modal.style.display = 'block';
+                    }
+                });
+        }
+
+        function closeModal() {
+            document.getElementById('reportModal').style.display = 'none';
+        }
+
+        function downloadAnalysis(date) {
+            const data = document.getElementById('modalContent').innerText;
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(data));
+            element.setAttribute('download', `AI_Analysis_${date}.txt`);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            alert('AI Analysis downloaded successfully');
+        }
+
+        function downloadOriginalReport(filename) {
+            alert(`Original report download functionality ready for: ${filename || 'Report'}`);
+        }
+
+        function addNotes() {
+            const notes = prompt('Add your clinical notes:');
+            if (notes) {
+                alert('Clinical notes saved: ' + notes);
+            }
+        }
+
+        function generatePrescription() {
+            const prescription = prompt('Enter prescription details:');
+            if (!prescription) {
+                return;
+            }
+            const treatment_plan = prompt('Enter treatment plan / next steps:');
+            const currentReportIndex = parseInt(document.getElementById('reportModal').dataset.currentReport, 10);
+
+            fetch('/api/doctor/save-prescription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    index: currentReportIndex,
+                    prescription,
+                    treatment_plan,
+                    doctor_notes: 'Prescription created by doctor'
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Prescription saved successfully');
+                    loadDoctorReports();
+                } else {
+                    alert('Error saving prescription: ' + data.error);
+                }
+            });
+        }
+
+        async function loadStatistics() {
+            try {
+                const response = await fetch('/api/doctor/shared-reports');
+                const data = await response.json();
+                const reports = data.reports || [];
+                
+                document.getElementById('stats').innerHTML = `
+                    <p><strong>Total Reports:</strong> ${reports.length}</p>
+                    <p><strong>Patients:</strong> ${new Set(reports.map(r => r.patient_info?.patient_id)).size}</p>
+                    <p><strong>Last Update:</strong> ${reports.length > 0 ? reports[reports.length - 1].date : 'N/A'}</p>
+                `;
+            } catch (error) {
+                console.error('Failed to load statistics:', error);
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('reportModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Report Analyzer - SmartHealth</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="text"], input[type="file"], select { 
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;
+            font-size: 14px;
+        }
+        button { 
+            background: #007bff; color: white; padding: 10px 20px; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 14px;
+        }
+        button:hover { background: #0056b3; }
+        .analysis-result { 
+            background: #f8f9fa; padding: 20px; border-radius: 4px;
+            margin-top: 20px; border-left: 4px solid #28a745;
+        }
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
+        .share-section { 
+            background: #e7f3ff; padding: 15px; border-radius: 4px;
+            margin-top: 15px;
+        }
+        .doctor-list { margin-top: 10px; }
+        .doctor-item { 
+            background: white; padding: 10px; margin: 5px 0;
+            border-radius: 4px; cursor: pointer; border: 1px solid #ddd;
+        }
+        .doctor-item:hover { background: #f0f0f0; }
+        .loading { display: none; color: #007bff; }
+        .history-section { margin-top: 30px; }
+        .history-item { 
+            background: #fff3cd; padding: 10px; margin: 10px 0;
+            border-radius: 4px; border-left: 4px solid #ffc107;
+        }
+        nav { background: #333; padding: 10px; }
+        nav a { color: white; margin: 0 15px; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">SmartHealth</div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/patient-dashboard">Patient Dashboard</a></li>
+            <li><a href="/find-doctor">Find a Doctor</a></li>
+            <li><a href="/report-analyzer">Report Analyzer</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1>🏥 AI Medical Report Analyzer</h1>
+        <p>Powered by Ollama AI - Upload your medical reports for instant analysis</p>
+
+        <div class="form-section">
+            <h2>Upload Medical Report</h2>
+            <form id="reportForm">
+                <div class="form-group">
+                    <label for="patientId">Patient ID (Optional):</label>
+                    <input type="text" id="patientId" name="patientId" placeholder="Enter your patient ID">
+                </div>
+
+                <div class="form-group">
+                    <label for="reportFile">Medical Report (PDF):</label>
+                    <input type="file" id="reportFile" name="report" accept=".pdf" required>
+                </div>
+
+                <button type="submit" id="analyzeBtn">Analyze Report</button>
+                <span class="loading" id="loading">Analyzing... (This may take a minute with Ollama)</span>
+            </form>
+        </div>
+
+        <!-- Analysis Results -->
+        <div id="resultsContainer" style="display: none;">
+            <div class="analysis-result">
+                <h3>📋 Analysis Results</h3>
+                <div id="analysisText" style="background: white; padding: 15px; border-radius: 4px; border: 1px solid #ddd;"></div>
+                
+                <div class="share-section">
+                    <h4>📤 Share with Doctor</h4>
+                    <div style="background: #e3f2fd; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #1976d2;">
+                        <p style="margin: 0; color: #1565c0;"><strong>✓ What will be shared:</strong></p>
+                        <ul style="margin: 8px 0; padding-left: 20px; color: #1565c0;">
+                            <li>🤖 AI Analysis & Recommendations</li>
+                            <li>📄 Original Medical Report (Full Text)</li>
+                            <li>📚 Your Complete Medical History</li>
+                            <li>⏰ Analysis Timestamp & Patient Info</li>
+                        </ul>
+                    </div>
+                    
+                    <select id="doctorSelect" class="form-group">
+                        <option value="">-- Select Doctor or Specialty --</option>
+                    </select>
+                    
+                    <div class="form-group">
+                        <label for="doctorName">Doctor Name / Hospital:</label>
+                        <input type="text" id="doctorName" placeholder="Enter doctor's name or hospital">
+                    </div>
+
+                    <button type="button" id="shareBtn">📤 Share Report with Doctor</button>
+                    <span id="shareMessage" class="success" style="display: none; margin-left: 10px;"></span>
+                </div>
+            </div>
+
+            <div class="history-section">
+                <h3>📚 Your Medical History</h3>
+                <div id="historyContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load specialties on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSpecialties();
+            loadPatientHistory();
+        });
+
+        // Form submission
+        document.getElementById('reportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('reportFile');
+            const patientId = document.getElementById('patientId').value;
+            const loading = document.getElementById('loading');
+            
+            if (!fileInput.files[0]) {
+                alert('Please select a file');
+                return;
+            }
+
+            loading.style.display = 'inline';
+            
+            const formData = new FormData();
+            formData.append('report', fileInput.files[0]);
+            formData.append('patient_id', patientId);
+
+            try {
+                const response = await fetch('/analyze-medical-report', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Display analysis as HTML (not as plain text)
+                    document.getElementById('analysisText').innerHTML = data.analysis;
+                    document.getElementById('resultsContainer').style.display = 'block';
+                    document.getElementById('reportFile').value = '';
+                    
+                    // Store report ID for sharing
+                    document.getElementById('shareBtn').dataset.reportId = data.report_id;
+                    
+                    // Reload history
+                    loadPatientHistory();
+                } else {
+                    // Check if it's an Ollama setup issue
+                    if (data.setup_guide) {
+                        showOllamaSetupGuide(data);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                }
+            } catch (error) {
+                alert('Analysis failed: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        // Show Ollama setup guide
+        function showOllamaSetupGuide(data) {
+            const guideHTML = `
+                <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="color: #856404; margin-top: 0;">⚙️ ${data.error}</h3>
+                    <p><strong>Status:</strong> ${data.details}</p>
+                    
+                    <h4 style="color: #856404;">📋 Setup Instructions:</h4>
+                    <ol style="color: #856404;">
+                        <li><strong>Download Ollama:</strong> Visit <a href="https://ollama.com/download" target="_blank" style="color: #0056b3;">https://ollama.com/download</a></li>
+                        <li><strong>Install:</strong> Run the downloaded installer and follow the setup wizard</li>
+                        <li><strong>Pull Model:</strong> Open Command Prompt or PowerShell and run:
+                            <div style="background: #000; color: #0f0; padding: 10px; border-radius: 4px; margin: 10px 0; font-family: monospace;">
+                                ollama pull llama3.2
+                            </div>
+                        </li>
+                        <li><strong>Start Ollama:</strong> Ollama service starts automatically after installation</li>
+                        <li><strong>Verify:</strong> Check that Ollama is running in your system tray or taskbar</li>
+                        <li><strong>Retry:</strong> Upload your report again</li>
+                    </ol>
+                    
+                    <h4 style="color: #856404;">💡 Troubleshooting:</h4>
+                    <ul style="color: #856404;">
+                        <li>Ensure Ollama service is running (check taskbar)</li>
+                        <li>Verify llama3.2 model is installed: <code>ollama list</code></li>
+                        <li>Check if Ollama is accessible at: http://localhost:11434</li>
+                        <li>Try restarting Ollama service</li>
+                    </ul>
+                    
+                    <p style="color: #856404; margin-bottom: 0;"><strong>Note:</strong> Template-based analysis will be available as fallback while Ollama is being set up.</p>
+                </div>
+            `;
+            document.getElementById('resultsContainer').innerHTML = guideHTML;
+            document.getElementById('resultsContainer').style.display = 'block';
+        }
+
+        // Load specialties for doctor selection
+        async function loadSpecialties() {
+            try {
+                const response = await fetch('/specialties');
+                const data = await response.json();
+                const select = document.getElementById('doctorSelect');
+                
+                data.specialties.forEach(specialty => {
+                    const option = document.createElement('option');
+                    option.value = specialty;
+                    option.textContent = specialty;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load specialties:', error);
+            }
+        }
+
+        // Load patient history
+        async function loadPatientHistory() {
+            try {
+                const response = await fetch('/api/patient/history');
+                const data = await response.json();
+                const historyContainer = document.getElementById('historyContainer');
+                
+                if (data.history.length === 0) {
+                    historyContainer.innerHTML = '<p>No reports yet</p>';
+                    return;
+                }
+
+                historyContainer.innerHTML = data.history.slice(-5).reverse().map((report, index) => `
+                    <div class="history-item">
+                        <strong>${report.date}</strong><br>
+                        ${report.summary}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        }
+
+        // Share report with doctor
+        document.getElementById('shareBtn').addEventListener('click', async () => {
+            const reportId = parseInt(document.getElementById('shareBtn').dataset.reportId);
+            const doctorName = document.getElementById('doctorName').value || 'Not Specified';
+            
+            if (!doctorName) {
+                alert('Please enter a doctor name');
+                return;
+            }
+
+            try {
+                const response = await fetch('/share-report-to-doctor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        report_id: reportId,
+                        doctor_name: doctorName,
+                        patient_info: {
+                            patient_id: document.getElementById('patientId').value,
+                            report_date: new Date().toLocaleString()
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('shareMessage').textContent = data.message;
+                    document.getElementById('shareMessage').style.display = 'inline';
+                    setTimeout(() => {
+                        document.getElementById('shareMessage').style.display = 'none';
+                    }, 3000);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Failed to share report: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

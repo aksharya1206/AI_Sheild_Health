@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor-Prescribed Treatments - SmartHealth</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background: #f5f7fa; }
+        header { background: #007bff; color: white; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 28px; }
+        nav { }
+        nav a { color: white; margin: 0 15px; text-decoration: none; font-weight: 500; transition: opacity 0.3s; }
+        nav a:hover { opacity: 0.8; }
+        .hero { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 60px 20px; 
+            text-align: center;
+        }
+        .hero h2 { font-size: 36px; margin-bottom: 10px; }
+        .hero p { font-size: 18px; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        .prescription-section h2 { color: #007bff; margin-bottom: 30px; font-size: 28px; }
+        .prescription-item {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .prescription-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .prescription-item h3 { color: #007bff; margin-bottom: 15px; font-size: 20px; }
+        .prescription-item p { margin: 8px 0; line-height: 1.8; }
+        .prescription-item strong { color: #667eea; }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>🏥 SmartHealth</h1>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/find-doctor">Find a Doctor</a>
+        <a href="/treatments">Treatments</a>
+        <a href="/dashboard">Dashboard</a>
+    </nav>
+</header>
+
+<section class="hero">
+    <h2>💊 Doctor-Prescribed Treatments</h2>
+    <p>Your personalized treatment plans and prescriptions from your healthcare provider</p>
+</section>
+
+<section class="container">
+    <div class="prescription-section">
+        <h2>Your Active Treatment Plans</h2>
+        <div id="prescriptionList">
+            <div class="empty-state">
+                <p>📋 Loading doctor-prescribed treatments...</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const response = await fetch('/api/doctor/prescriptions');
+            const data = await response.json();
+            const reports = data.prescriptions || [];
+
+            const container = document.getElementById('prescriptionList');
+            if (!reports.length) {
+                container.innerHTML = '<div class="empty-state"><p>📋 No prescriptions have been entered yet.</p></div>';
+                return;
+            }
+
+            container.innerHTML = reports.reverse().map(report => {
+                const patient = report.patient_info || {};
+                return `
+                    <div class="prescription-item">
+                        <h3>👤 Patient ID: ${patient.patient_id || 'Unknown'}</h3>
+                        <p><strong>👨‍⚕️ Doctor:</strong> ${report.shared_with_doctor || 'N/A'}</p>
+                        <p><strong>📅 Report Date:</strong> ${report.date || 'N/A'}</p>
+                        <p><strong>💊 Prescription:</strong></p>
+                        <p style="background: #f0f7ff; padding: 12px; border-left: 3px solid #2bb3c0; margin: 10px 0;">${report.prescription || '<em>No prescription entered</em>'}</p>
+                        <p><strong>📋 Treatment Plan:</strong></p>
+                        <p style="background: #f0f7ff; padding: 12px; border-left: 3px solid #2bb3c0; margin: 10px 0;">${report.treatment_plan || '<em>No treatment plan entered</em>'}</p>
+                        <p><strong>🔍 Medical Analysis Summary:</strong></p>
+                        <p style="color: #666; font-size: 14px;">${report.full_analysis ? report.full_analysis.substring(0, 250) + '...' : 'No analysis available'}</p>
+                    </div>
+                `;
+            }).join('');
+        } catch (err) {
+            document.getElementById('prescriptionList').innerHTML = '<div class="empty-state"><p>❌ Error loading prescriptions.</p></div>';
+            console.error(err);
+        }
+    });
+</script>
+
+</body>
+
+</html>

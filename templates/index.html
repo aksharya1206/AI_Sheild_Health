@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartHealth AI Shield</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        header { background: #007bff; color: white; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        header h1 { font-size: 28px; }
+        nav { margin-top: 15px; }
+        nav a { color: white; margin: 0 15px; text-decoration: none; font-weight: 500; transition: opacity 0.3s; }
+        nav a:hover { opacity: 0.8; }
+        .hero { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 60px 20px; 
+            text-align: center;
+        }
+        .hero h2 { font-size: 36px; margin-bottom: 10px; }
+        .hero p { font-size: 18px; margin-bottom: 20px; }
+        .hero button { 
+            background: white; 
+            color: #667eea; 
+            padding: 12px 30px; 
+            border: none; 
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .hero button:hover { transform: scale(1.05); }
+        .dashboard-links {
+            background: #f8f9fa;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .dashboard-links h2 { margin-bottom: 30px; color: #333; }
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .link-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-decoration: none;
+            color: #333;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-top: 4px solid #007bff;
+        }
+        .link-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .link-card h3 { margin-bottom: 10px; color: #007bff; }
+        .link-card p { font-size: 14px; color: #666; }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 40px 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .card h3 { color: #007bff; margin-bottom: 10px; }
+        .ai-checker, .medicine-scanner {
+            background: #f8f9fa;
+            padding: 40px 20px;
+            max-width: 600px;
+            margin: 20px auto;
+            border-radius: 8px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        form label { font-weight: bold; color: #333; }
+        form select, form input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        form button {
+            background: #007bff;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        form button:hover { background: #0056b3; }
+        #result, #medicineResult {
+            padding: 15px;
+            background: #e7f3ff;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+            min-height: 20px;
+        }
+        footer { background: #333; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🏥 SmartHealth AI Shield</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/patient-dashboard">📋 Patient Dashboard</a>
+            <a href="/doctor-dashboard">👨‍⚕️ Doctor Dashboard</a>
+            <a href="/report-analyzer">📊 AI Report Analyzer</a>
+            <a href="/find-doctor">🔍 Find a Doctor</a>
+            <a href="/treatments">💊 Treatments</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h2>Your Health, On Your Time</h2>
+        <p>Access AI-powered health analysis and certified doctors online</p>
+        <button onclick="window.location.href='/report-analyzer'">Start Report Analysis</button>
+    </section>
+
+    <section class="dashboard-links">
+        <h2>🚀 Quick Access</h2>
+        <div class="links-grid">
+            <a href="/patient-dashboard" class="link-card">
+                <h3>📋 Patient Dashboard</h3>
+                <p>View your medical reports, history, and health metrics</p>
+            </a>
+            <a href="/doctor-dashboard" class="link-card">
+                <h3>👨‍⚕️ Doctor Dashboard</h3>
+                <p>Review patient reports and shared medical analyses</p>
+            </a>
+            <a href="/report-analyzer" class="link-card">
+                <h3>📊 AI Report Analyzer</h3>
+                <p>Upload PDFs for instant AI-powered medical analysis using Ollama</p>
+            </a>
+            <a href="/find-doctor" class="link-card">
+                <h3>🔍 Find Specialist</h3>
+                <p>Search and connect with qualified medical specialists</p>
+            </a>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="card">
+            <h3>🤖 AI Analysis</h3>
+            <p>Get instant medical report analysis using advanced Ollama AI (Llama 3.2)</p>
+        </div>
+        <div class="card">
+            <h3>📱 Online Consultation</h3>
+            <p>Connect with certified doctors for professional medical advice</p>
+        </div>
+        <div class="card">
+            <h3>📚 Medical History</h3>
+            <p>Keep track of all your medical reports and analysis</p>
+        </div>
+        <div class="card">
+            <h3>👨‍⚕️ Doctor Integration</h3>
+            <p>Share reports with doctors along with complete patient history</p>
+        </div>
+    </section>
+
+    <section class="ai-checker">
+        <h2>🔍 AI Symptom Checker</h2>
+        <form id="symptomForm">
+            <label>Do you have Fever?</label>
+            <select name="fever" required>
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+            </select>
+
+            <label>Do you have Cough?</label>
+            <select name="cough" required>
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+            </select>
+
+            <label>Do you have Fatigue?</label>
+            <select name="fatigue" required>
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+            </select>
+
+            <label>Do you have Headache?</label>
+            <select name="headache" required>
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+            </select>
+
+            <label>Do you have Body Pain?</label>
+            <select name="bodypain" required>
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+            </select>
+
+            <button type="submit">Get AI Analysis</button>
+        </form>
+        <div id="result"></div>
+    </section>
+
+    <section class="medicine-scanner">
+        <h2>💊 AI Medicine Scanner</h2>
+        <form id="medicineForm" enctype="multipart/form-data">
+            <label for="medicineImage">Upload Medicine Image:</label>
+            <input type="file" name="image" id="medicineImage" accept="image/*" required>
+            <button type="submit">Scan Medicine</button>
+        </form>
+        <div id="medicineResult"></div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 SmartHealth AI Shield. All rights reserved. | Powered by Ollama AI</p>
+    </footer>
+
+    <script src="/static/script.js"></script>
+    <script>
+        // Symptom form submission
+        document.getElementById('symptomForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                document.getElementById('result').innerHTML = 
+                    `<strong>Predicted Condition:</strong> ${data.disease}`;
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    `<strong>Error:</strong> ${error.message}`;
+            }
+        });
+
+        // Medicine scanner form submission
+        document.getElementById('medicineForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('/scan_medicine', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                document.getElementById('medicineResult').innerHTML = `
+                    <strong>Result:</strong> ${data.result}<br>
+                    <strong>Warning:</strong> ${data.expiry_warning}<br>
+                    <strong>Note:</strong> ${data.side_effects}
+                `;
+            } catch (error) {
+                document.getElementById('medicineResult').innerHTML = 
+                    `<strong>Error:</strong> ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

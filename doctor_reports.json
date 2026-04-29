@@ -1,0 +1,20 @@
+{
+  "reports": [
+    {
+      "id": 0,
+      "date": "2026-04-29 12:31:04",
+      "filename": "sample_health_report.pdf",
+      "summary": "\n[AUTOMATED ANALYSIS - Ollama AI Unavailable]\nAnalysis Generated: 2026-04-29 12:31:04\nStatus: Using Template-Based Analysis (Full AI analysis unavailable)\n\n1. SUMMARY:\n   Preliminary assessment of med...",
+      "full_analysis": "\n[AUTOMATED ANALYSIS - Ollama AI Unavailable]\nAnalysis Generated: 2026-04-29 12:31:04\nStatus: Using Template-Based Analysis (Full AI analysis unavailable)\n\n1. SUMMARY:\n   Preliminary assessment of medical report. \n   Key content: \nYou are a medical AI assistant analyzing a medical report with patient context.\n\nPATIENT MEDICAL HISTORY:\n\n\nCURRENT MEDICAL REPORT TO ANALYZE:\nSample Medical Laboratory Report\nPatient Name: Priya Sha...\n   \n   NOTE: For full AI-powered analysis, please ensure:\n   - Ollama is downloaded from https://ollama.com/download\n   - Ollama service is running on your system\n   - Model 'llama3.2' is installed (run: ollama pull llama3.2)\n   - Service is accessible at http://localhost:11434\n\n2. KEY FINDINGS:\n   - Report received and indexed for analysis\n   - Template-based preliminary review available\n   - Full semantic analysis pending Ollama availability\n\n3. POSSIBLE CONCERNS:\n   - Text extraction completed successfully\n   - Detailed analysis requires active Ollama connection\n   - Recommend enabling Ollama for comprehensive medical insights\n\n4. RECOMMENDED SPECIALIST:\n   - Consult with General Practitioner for initial assessment\n   - Specialized review recommended after full AI analysis\n\n5. URGENCY LEVEL:\n   - Requires Human Review (template-based assessment only)\n   - Please share with a healthcare professional for proper diagnosis\n\n6. ADVICE:\n   - This is a preliminary assessment template\n   - Always consult with qualified medical professionals\n   - For advanced AI analysis, start Ollama service and retry\n   \n[To enable full Ollama AI analysis:]\n1. Download Ollama from https://ollama.com/download\n2. Install and run Ollama on your system\n3. In terminal, run: ollama pull llama3.2\n4. Refresh and resubmit your report for full analysis\n    ",
+      "extracted_text": "Sample Medical Laboratory Report\nPatient Name: Priya Sharma\nAge: 24 years\nGender: Female\nDate of Test: 29 April 2026\nReferring Physician: Dr. Ananya Mehta\nComplete Blood Count (CBC):\nHemoglobin: 12.8 g/dL (Normal: 12.0\u201315.5 g/dL)\nWBC Count: 7,200 /\u00b5L (Normal: 4,000\u201311,000 /\u00b5L)\nPlatelet Count: 250,000 /\u00b5L (Normal: 150,000\u2013450,000 /\u00b5L)\nBlood Glucose (Fasting): 92 mg/dL (Normal: 70\u201399 mg/dL)\nTotal Cholesterol: 178 mg/dL (Desirable: <200 mg/dL)\nHDL Cholesterol: 58 mg/dL\nLDL Cholesterol: 96 mg/dL\nTriglycerides: 118 mg/dL\nLiver Function Test:\nALT: 24 U/L\nAST: 22 U/L\nBilirubin Total: 0.8 mg/dL\nSummary:\nAll parameters are within normal limits. No significant abnormalities detected. Maintain a\nbalanced diet, regular exercise, and routine annual health check-ups.\n",
+      "patient_id": "12ak06",
+      "patient_history": [],
+      "shared_with_doctor": "Aksh ",
+      "patient_info": {
+        "patient_id": "12ak06",
+        "report_date": "29/4/2026, 12:33:50 pm"
+      },
+      "shared_date": "2026-04-29 12:33:50"
+    }
+  ]
+}

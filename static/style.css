@@ -1,0 +1,64 @@
+body{
+font-family: Arial;
+margin:0;
+background:#f5f7fa;
+}
+
+header{
+display:flex;
+justify-content:space-between;
+padding:20px;
+background:white;
+}
+
+nav a{
+margin:10px;
+text-decoration:none;
+color:#333;
+}
+
+.hero{
+text-align:center;
+padding:80px;
+background:#e6f4f9;
+}
+
+.hero h2{
+font-size:40px;
+}
+
+button{
+padding:10px 20px;
+background:#2bb3c0;
+border:none;
+color:white;
+border-radius:5px;
+}
+
+.features{
+display:flex;
+justify-content:center;
+gap:20px;
+padding:50px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+width:250px;
+}
+
+.ai-checker{
+text-align:center;
+padding:50px;
+}
+
+form{
+display:flex;
+flex-direction:column;
+width:200px;
+margin:auto;
+gap:10px;
+}
