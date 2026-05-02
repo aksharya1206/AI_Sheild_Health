@@ -236,7 +236,7 @@ POST /scan_medicine                 - Medicine scanner
 - Edge 90+
 - Mobile browsers (iOS Safari, Chrome Mobile)
 
----
+
 
 ## 🛠️ Development
 
