@@ -5,291 +5,152 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Report Analyzer - SmartHealth</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
     <style>
-        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        input[type="text"], input[type="file"], select { 
-            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;
-            font-size: 14px;
+        /* --- GLOBAL STYLES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #f0f9ff; color: #1e293b; line-height: 1.6; }
+
+        /* --- GLOSSY NAVBAR (Matches Home Page) --- */
+        nav.navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            padding: 15px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(13, 148, 136, 0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
-        button { 
-            background: #007bff; color: white; padding: 10px 20px; border: none;
-            border-radius: 4px; cursor: pointer; font-size: 14px;
+        .logo { font-size: 22px; font-weight: 800; color: #0d9488; }
+        .nav-links { display: flex; list-style: none; gap: 30px; }
+        .nav-links a { text-decoration: none; color: #475569; font-weight: 600; font-size: 14px; transition: 0.3s; }
+        .nav-links a:hover { color: #0d9488; }
+
+        /* --- HERO AREA --- */
+        .container { max-width: 900px; margin: 50px auto; padding: 0 20px; }
+        .header-section { text-align: center; margin-bottom: 40px; }
+        h1 { 
+            font-size: 38px; font-weight: 800; 
+            background: linear-gradient(135deg, #0d9488 0%, #0ea5e9 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        button:hover { background: #0056b3; }
-        .analysis-result { 
-            background: #f8f9fa; padding: 20px; border-radius: 4px;
-            margin-top: 20px; border-left: 4px solid #28a745;
+        .subtitle { color: #64748b; font-weight: 500; font-size: 1.1rem; margin-top: 10px; }
+
+        /* --- GLASSMORPHISM FORM CARD --- */
+        .form-section {
+            background: white; padding: 40px; border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.03);
+            border: 1px solid rgba(226, 232, 240, 0.8);
         }
-        .error { color: #dc3545; }
-        .success { color: #28a745; }
-        .share-section { 
-            background: #e7f3ff; padding: 15px; border-radius: 4px;
-            margin-top: 15px;
+        .form-group { margin-bottom: 25px; }
+        label { display: block; font-weight: 600; margin-bottom: 10px; font-size: 14px; color: #475569; }
+        
+        input[type="text"], input[type="file"] {
+            width: 100%; padding: 15px; border-radius: 12px;
+            border: 2px solid #f1f5f9; background: #f8fafc; font-size: 1rem;
         }
-        .doctor-list { margin-top: 10px; }
-        .doctor-item { 
-            background: white; padding: 10px; margin: 5px 0;
-            border-radius: 4px; cursor: pointer; border: 1px solid #ddd;
+        input:focus { border-color: #0d9488; outline: none; background: white; }
+
+        /* --- PREMIUM BUTTON --- */
+        #analyzeBtn {
+            width: 100%; background: linear-gradient(135deg, #0d9488 0%, #0ea5e9 100%);
+            color: white; padding: 18px; border: none; border-radius: 15px;
+            font-size: 17px; font-weight: 700; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(13, 148, 136, 0.2);
         }
-        .doctor-item:hover { background: #f0f0f0; }
-        .loading { display: none; color: #007bff; }
-        .history-section { margin-top: 30px; }
-        .history-item { 
-            background: #fff3cd; padding: 10px; margin: 10px 0;
-            border-radius: 4px; border-left: 4px solid #ffc107;
-        }
-        nav { background: #333; padding: 10px; }
-        nav a { color: white; margin: 0 15px; text-decoration: none; }
+        #analyzeBtn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(13, 148, 136, 0.3); }
+
+        /* --- RESULTS AREA --- */
+        #resultsContainer { margin-top: 40px; }
+        .analysis-result { background: white; padding: 30px; border-radius: 24px; border: 1px solid #e2e8f0; }
+        
+        /* CSS for the colored cards we added in Python */
+        .analysis-card { margin-bottom: 15px; transition: 0.2s; }
+        .critical-card { border-left-color: #ef4444 !important; background-color: #fef2f2 !important; }
+        .warning-card { border-left-color: #f59e0b !important; background-color: #fffbeb !important; }
+        .normal-card { border-left-color: #10b981 !important; background-color: #f0fdf4 !important; }
+
+        .loading { text-align: center; color: #0ea5e9; font-weight: 700; display: none; margin-top: 15px; }
     </style>
 </head>
 <body>
+
     <nav class="navbar">
-        <div class="logo">SmartHealth</div>
+        <div class="logo">🏥 SmartHealth AI</div>
         <ul class="nav-links">
             <li><a href="/">Home</a></li>
-            <li><a href="/patient-dashboard">Patient Dashboard</a></li>
-            <li><a href="/find-doctor">Find a Doctor</a></li>
-            <li><a href="/report-analyzer">Report Analyzer</a></li>
+            <li><a href="/patient-dashboard">Dashboard</a></li>
+            <li><a href="/find-doctor">Doctors</a></li>
+            <li><a href="/report-analyzer">AI Analyzer</a></li>
         </ul>
     </nav>
 
     <div class="container">
-        <h1>🏥 AI Medical Report Analyzer</h1>
-        <p>Powered by Ollama AI - Upload your medical reports for instant analysis</p>
+        <div class="header-section">
+            <h1>AI Medical Report Analyzer</h1>
+            <p class="subtitle">Experience clinical-grade analysis powered by Llama 3.2</p>
+        </div>
 
         <div class="form-section">
-            <h2>Upload Medical Report</h2>
             <form id="reportForm">
                 <div class="form-group">
-                    <label for="patientId">Patient ID (Optional):</label>
-                    <input type="text" id="patientId" name="patientId" placeholder="Enter your patient ID">
+                    <label>Patient ID (Optional)</label>
+                    <input type="text" id="patientId" placeholder="e.g. PH-10234">
                 </div>
 
                 <div class="form-group">
-                    <label for="reportFile">Medical Report (PDF):</label>
-                    <input type="file" id="reportFile" name="report" accept=".pdf" required>
+                    <label>Medical Report (PDF Format)</label>
+                    <input type="file" id="reportFile" accept=".pdf" required>
                 </div>
 
-                <button type="submit" id="analyzeBtn">Analyze Report</button>
-                <span class="loading" id="loading">Analyzing... (This may take a minute with Ollama)</span>
+                <button type="submit" id="analyzeBtn">Analyze Report Now →</button>
+                <div class="loading" id="loading">🧬 AI is processing your data...</div>
             </form>
         </div>
 
-        <!-- Analysis Results -->
         <div id="resultsContainer" style="display: none;">
             <div class="analysis-result">
-                <h3>📋 Analysis Results</h3>
-                <div id="analysisText" style="background: white; padding: 15px; border-radius: 4px; border: 1px solid #ddd;"></div>
-                
-                <div class="share-section">
-                    <h4>📤 Share with Doctor</h4>
-                    <div style="background: #e3f2fd; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #1976d2;">
-                        <p style="margin: 0; color: #1565c0;"><strong>✓ What will be shared:</strong></p>
-                        <ul style="margin: 8px 0; padding-left: 20px; color: #1565c0;">
-                            <li>🤖 AI Analysis & Recommendations</li>
-                            <li>📄 Original Medical Report (Full Text)</li>
-                            <li>📚 Your Complete Medical History</li>
-                            <li>⏰ Analysis Timestamp & Patient Info</li>
-                        </ul>
-                    </div>
-                    
-                    <select id="doctorSelect" class="form-group">
-                        <option value="">-- Select Doctor or Specialty --</option>
-                    </select>
-                    
-                    <div class="form-group">
-                        <label for="doctorName">Doctor Name / Hospital:</label>
-                        <input type="text" id="doctorName" placeholder="Enter doctor's name or hospital">
-                    </div>
-
-                    <button type="button" id="shareBtn">📤 Share Report with Doctor</button>
-                    <span id="shareMessage" class="success" style="display: none; margin-left: 10px;"></span>
-                </div>
-            </div>
-
-            <div class="history-section">
-                <h3>📚 Your Medical History</h3>
-                <div id="historyContainer"></div>
+                <h3 style="margin-bottom: 20px; color: #0d9488;">📋 Expert Analysis Results</h3>
+                <div id="analysisText"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // Load specialties on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadSpecialties();
-            loadPatientHistory();
-        });
-
-        // Form submission
         document.getElementById('reportForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const fileInput = document.getElementById('reportFile');
-            const patientId = document.getElementById('patientId').value;
             const loading = document.getElementById('loading');
+            const results = document.getElementById('resultsContainer');
             
-            if (!fileInput.files[0]) {
-                alert('Please select a file');
-                return;
-            }
+            loading.style.display = 'block';
+            results.style.display = 'none';
 
-            loading.style.display = 'inline';
-            
             const formData = new FormData();
             formData.append('report', fileInput.files[0]);
-            formData.append('patient_id', patientId);
+            formData.append('patient_id', document.getElementById('patientId').value);
 
             try {
-                const response = await fetch('/analyze-medical-report', {
-                    method: 'POST',
-                    body: formData
-                });
-
+                // IMPORTANT: Ensure this route matches your app.py (@app.route('/analyze-report'))
+                const response = await fetch('/analyze-report', { method: 'POST', body: formData });
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Display analysis as HTML (not as plain text)
                     document.getElementById('analysisText').innerHTML = data.analysis;
-                    document.getElementById('resultsContainer').style.display = 'block';
-                    document.getElementById('reportFile').value = '';
-                    
-                    // Store report ID for sharing
-                    document.getElementById('shareBtn').dataset.reportId = data.report_id;
-                    
-                    // Reload history
-                    loadPatientHistory();
-                } else {
-                    // Check if it's an Ollama setup issue
-                    if (data.setup_guide) {
-                        showOllamaSetupGuide(data);
-                    } else {
-                        alert('Error: ' + data.error);
-                    }
-                }
-            } catch (error) {
-                alert('Analysis failed: ' + error.message);
-            } finally {
-                loading.style.display = 'none';
-            }
-        });
-
-        // Show Ollama setup guide
-        function showOllamaSetupGuide(data) {
-            const guideHTML = `
-                <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <h3 style="color: #856404; margin-top: 0;">⚙️ ${data.error}</h3>
-                    <p><strong>Status:</strong> ${data.details}</p>
-                    
-                    <h4 style="color: #856404;">📋 Setup Instructions:</h4>
-                    <ol style="color: #856404;">
-                        <li><strong>Download Ollama:</strong> Visit <a href="https://ollama.com/download" target="_blank" style="color: #0056b3;">https://ollama.com/download</a></li>
-                        <li><strong>Install:</strong> Run the downloaded installer and follow the setup wizard</li>
-                        <li><strong>Pull Model:</strong> Open Command Prompt or PowerShell and run:
-                            <div style="background: #000; color: #0f0; padding: 10px; border-radius: 4px; margin: 10px 0; font-family: monospace;">
-                                ollama pull llama3.2
-                            </div>
-                        </li>
-                        <li><strong>Start Ollama:</strong> Ollama service starts automatically after installation</li>
-                        <li><strong>Verify:</strong> Check that Ollama is running in your system tray or taskbar</li>
-                        <li><strong>Retry:</strong> Upload your report again</li>
-                    </ol>
-                    
-                    <h4 style="color: #856404;">💡 Troubleshooting:</h4>
-                    <ul style="color: #856404;">
-                        <li>Ensure Ollama service is running (check taskbar)</li>
-                        <li>Verify llama3.2 model is installed: <code>ollama list</code></li>
-                        <li>Check if Ollama is accessible at: http://localhost:11434</li>
-                        <li>Try restarting Ollama service</li>
-                    </ul>
-                    
-                    <p style="color: #856404; margin-bottom: 0;"><strong>Note:</strong> Template-based analysis will be available as fallback while Ollama is being set up.</p>
-                </div>
-            `;
-            document.getElementById('resultsContainer').innerHTML = guideHTML;
-            document.getElementById('resultsContainer').style.display = 'block';
-        }
-
-        // Load specialties for doctor selection
-        async function loadSpecialties() {
-            try {
-                const response = await fetch('/specialties');
-                const data = await response.json();
-                const select = document.getElementById('doctorSelect');
-                
-                data.specialties.forEach(specialty => {
-                    const option = document.createElement('option');
-                    option.value = specialty;
-                    option.textContent = specialty;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Failed to load specialties:', error);
-            }
-        }
-
-        // Load patient history
-        async function loadPatientHistory() {
-            try {
-                const response = await fetch('/api/patient/history');
-                const data = await response.json();
-                const historyContainer = document.getElementById('historyContainer');
-                
-                if (data.history.length === 0) {
-                    historyContainer.innerHTML = '<p>No reports yet</p>';
-                    return;
-                }
-
-                historyContainer.innerHTML = data.history.slice(-5).reverse().map((report, index) => `
-                    <div class="history-item">
-                        <strong>${report.date}</strong><br>
-                        ${report.summary}
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('Failed to load history:', error);
-            }
-        }
-
-        // Share report with doctor
-        document.getElementById('shareBtn').addEventListener('click', async () => {
-            const reportId = parseInt(document.getElementById('shareBtn').dataset.reportId);
-            const doctorName = document.getElementById('doctorName').value || 'Not Specified';
-            
-            if (!doctorName) {
-                alert('Please enter a doctor name');
-                return;
-            }
-
-            try {
-                const response = await fetch('/share-report-to-doctor', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        report_id: reportId,
-                        doctor_name: doctorName,
-                        patient_info: {
-                            patient_id: document.getElementById('patientId').value,
-                            report_date: new Date().toLocaleString()
-                        }
-                    })
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    document.getElementById('shareMessage').textContent = data.message;
-                    document.getElementById('shareMessage').style.display = 'inline';
-                    setTimeout(() => {
-                        document.getElementById('shareMessage').style.display = 'none';
-                    }, 3000);
+                    results.style.display = 'block';
                 } else {
                     alert('Error: ' + data.error);
                 }
-            } catch (error) {
-                alert('Failed to share report: ' + error.message);
+            } catch (err) {
+                alert('Connection failed. Is Ollama running?');
+            } finally {
+                loading.style.display = 'none';
             }
         });
     </script>

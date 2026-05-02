@@ -1,216 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Dashboard - SmartHealth</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
     <style>
-        .dashboard-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .dashboard-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 20px; 
+        /* --- RESET & GLOBAL --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #f8fafc; color: #1e293b; line-height: 1.6; }
+
+        /* --- FIXED NAVBAR --- */
+        nav.navbar {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 15px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
         }
-        .card { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-left: 4px solid #007bff;
+        .logo { font-size: 22px; font-weight: 800; color: #0d9488; }
+        .nav-links { display: flex; list-style: none; gap: 25px; }
+        .nav-links a { text-decoration: none; color: #475569; font-weight: 600; font-size: 14px; transition: 0.3s; }
+        .nav-links a:hover { color: #0d9488; }
+
+        /* --- DASHBOARD LAYOUT --- */
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        
+        .welcome-msg { margin-bottom: 30px; }
+        .welcome-msg h1 { font-size: 32px; font-weight: 800; color: #0f172a; }
+        .welcome-msg p { color: #64748b; font-size: 16px; }
+
+        /* --- STATS GRID --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
         }
-        .card h3 { margin-top: 0; color: #333; }
-        .report-item, .appointment-item { 
-            background: #f8f9fa; 
-            padding: 12px; 
-            margin: 8px 0; 
-            border-radius: 4px;
-            border-left: 3px solid #28a745;
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
         }
-        .full-width { grid-column: 1 / -1; }
-        .medicine-item { 
-            background: #fff3cd; 
-            padding: 10px; 
-            margin: 8px 0; 
-            border-radius: 4px;
-            border-left: 3px solid #ffc107;
+        .stat-card:hover { transform: translateY(-5px); }
+        
+        .stat-label { font-size: 13px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 28px; font-weight: 800; color: #1e293b; margin: 8px 0; }
+        .stat-status { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 20px; display: inline-block; }
+        
+        .status-normal { background: #f0fdf4; color: #166534; }
+        .status-alert { background: #fef2f2; color: #991b1b; }
+
+        /* --- HISTORY SECTION --- */
+        .section-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        .history-list { display: flex; flex-direction: column; gap: 12px; }
+        .history-item {
+            background: white;
+            padding: 18px;
+            border-radius: 16px;
+            border-left: 6px solid #0d9488;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
-        .btn { 
-            background: #007bff; 
-            color: white; 
-            padding: 8px 12px; 
-            border: none; 
-            border-radius: 4px; 
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
+        .report-info strong { color: #334155; font-size: 15px; }
+        .report-date { font-size: 13px; color: #94a3b8; display: block; }
+        .view-btn { 
+            text-decoration: none; background: #f1f5f9; color: #475569; 
+            padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;
         }
-        .btn:hover { background: #0056b3; }
-        .btn-secondary { background: #6c757d; }
-        .btn-secondary:hover { background: #5a6268; }
-        nav { background: #333; padding: 10px; margin-bottom: 20px; }
-        nav a { color: white; margin: 0 15px; text-decoration: none; }
-        .nav-links li { list-style: none; display: inline-block; }
+        .view-btn:hover { background: #e2e8f0; }
+
     </style>
 </head>
 <body>
+
     <nav class="navbar">
-        <div class="logo">SmartHealth</div>
+        <div class="logo">🏥 SmartHealth</div>
         <ul class="nav-links">
             <li><a href="/">Home</a></li>
-            <li><a href="/report-analyzer">Report Analyzer</a></li>
-            <li><a href="/find-doctor">Find a Doctor</a></li>
+            <li><a href="/report-analyzer">AI Analyzer</a></li>
+            <li><a href="/find-doctor">Doctors</a></li>
             <li><a href="/treatments">Treatments</a></li>
-            <li><a href="/dashboard">General Dashboard</a></li>
         </ul>
     </nav>
 
-    <section class="dashboard-container">
-        <h1>👤 Patient Dashboard</h1>
-        <p>Welcome to your personalized health hub. Manage your medical reports, appointments, and health metrics.</p>
+    <div class="container">
+        <div class="welcome-msg">
+            <h1>Patient Dashboard</h1>
+            <p>Welcome back! Here's a quick look at your latest vitals.</p>
+        </div>
 
-        <div class="dashboard-grid">
-            <div class="card">
-                <h3>📋 Profile Summary</h3>
-                <div id="profileSummary">
-                    <p><strong>Status:</strong> Active</p>
-                    <p><strong>Member Since:</strong> 2024</p>
-                    <button class="btn btn-secondary" onclick="editProfile()">Edit Profile</button>
-                </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Heart Rate</span>
+                <div class="stat-value">72 <small style="font-size: 14px; color: #94a3b8;">BPM</small></div>
+                <span class="stat-status status-normal">● Normal</span>
             </div>
-
-            <div class="card">
-                <h3>📅 Upcoming Appointments</h3>
-                <div id="appointmentsList">
-                    <p>No upcoming appointments.</p>
-                </div>
+            <div class="stat-card">
+                <span class="stat-label">Blood Pressure</span>
+                <div class="stat-value">120/80</div>
+                <span class="stat-status status-normal">● Optimal</span>
             </div>
-
-            <div class="card">
-                <h3>📊 Health Metrics</h3>
-                <div id="metricsList">
-                    <p><strong>Heart Rate:</strong> -- bpm</p>
-                    <p><strong>Blood Pressure:</strong> --</p>
-                    <p><strong>BMI:</strong> --</p>
-                    <p><strong>Sleep:</strong> -- hrs</p>
-                </div>
-            </div>
-
-            <div class="card full-width">
-                <h3>🏥 Recent AI Medical Reports</h3>
-                <div id="reportsList">
-                    <p>No reports yet. <a href="/report-analyzer" class="btn">Upload Report</a></p>
-                </div>
-            </div>
-
-            <div class="card full-width">
-                <h3>💊 Active Medications</h3>
-                <div id="medicinesList">
-                    <p>No active medications.</p>
-                </div>
-            </div>
-
-            <div class="card full-width">
-                <h3>📝 Medical History</h3>
-                <div id="historyList">
-                    <p>Loading...</p>
-                </div>
+            <div class="stat-card">
+                <span class="stat-label">Medical Status</span>
+                <div class="stat-value" style="font-size: 22px;">Active Member</div>
+                <span class="stat-status" style="background:#e0f2fe; color:#0369a1;">ID: PH-2024</span>
             </div>
         </div>
-    </section>
 
-    <script>
-        // Load patient data on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadPatientDashboard();
-        });
+        <div class="section-title">📂 Recent Medical Reports</div>
+        <div class="history-list">
+            {% if reports %}
+                {% for report in reports %}
+                <div class="history-item">
+                    <div class="report-info">
+                        <strong>{{ report.filename }}</strong>
+                        <span class="report-date">{{ report.date }}</span>
+                    </div>
+                    <a href="#" class="view-btn">View Full Report</a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 40px; color: #94a3b8; background: white; border-radius: 20px;">
+                    No reports found. Start by uploading one in the AI Analyzer.
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
-        async function loadPatientDashboard() {
-            try {
-                // Load patient profile
-                const profileResponse = await fetch('/api/patient/history');
-                const profileData = await profileResponse.json();
-                
-                if (profileData.history && profileData.history.length > 0) {
-                    const reportsHTML = profileData.history.slice(-5).reverse().map((report, index) => `
-                        <div class="report-item">
-                            <p><strong>${report.date}</strong></p>
-                            <div style="background: #f0f7ff; padding: 10px; border-radius: 4px; max-height: 150px; overflow-y: auto; font-size: 12px;">
-                                ${report.summary}
-                            </div>
-                            <small><a href="#" onclick="viewReport(${index})">View Full Report</a></small>
-                        </div>
-                    `).join('');
-                    document.getElementById('reportsList').innerHTML = reportsHTML;
-                } else {
-                    document.getElementById('reportsList').innerHTML = '<p>No reports yet. <a href="/report-analyzer" class="btn">Upload Your First Report</a></p>';
-                }
-
-                // Load medical history timeline with problems
-                if (profileData.history && profileData.history.length > 0) {
-                    const historyHTML = profileData.history.slice(-10).reverse().map((report, idx) => {
-                        // Extract problem areas from analysis
-                        const analysis = report.full_analysis || report.summary || '';
-                        const problemKeywords = ['concern', 'abnormal', 'critical', 'high', 'elevated', 'positive', 'requires'];
-                        const hasProblems = problemKeywords.some(kw => analysis.toLowerCase().includes(kw));
-                        const problemColor = hasProblems ? '#fff3cd' : '#e8f5e9';
-                        const problemBorder = hasProblems ? '#ffc107' : '#4caf50';
-                        
-                        return `
-                        <div class="report-item" style="background: ${problemColor}; border-left: 4px solid ${problemBorder};">
-                            <strong>${report.date}</strong>
-                            <span style="background: ${problemBorder}; color: white; padding: 2px 8px; border-radius: 3px; font-size: 11px; margin-left: 10px;">
-                                ${report.filename || 'Medical Report'}
-                            </span>
-                            <br>
-                            <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 3px; max-height: 120px; overflow-y: auto; font-size: 11px; line-height: 1.4;">
-                                <strong>Problem/Finding:</strong><br>
-                                ${analysis.substring(0, 200)}...
-                            </div>
-                            <small style="margin-top: 5px; display: block;">
-                                <a href="#" onclick="viewDetailedReport(${profileData.history.length - 1 - idx}); return false;" style="color: #0056b3; text-decoration: none;">
-                                    📋 View Complete History →
-                                </a>
-                            </small>
-                        </div>
-                    `;
-                    }).join('');
-                    document.getElementById('historyList').innerHTML = historyHTML;
-                }
-            } catch (error) {
-                console.error('Failed to load dashboard:', error);
-                document.getElementById('reportsList').innerHTML = '<p>Error loading reports</p>';
-            }
-        }
-
-        function editProfile() {
-            const patientId = prompt('Enter your Patient ID:');
-            if (patientId) {
-                alert(`Profile editing would be implemented. Patient ID: ${patientId}`);
-            }
-        }
-
-        function viewReport(index) {
-            alert(`Report viewing would display full analysis for report ${index}`);
-        }
-
-        function viewDetailedReport(index) {
-            fetch('/api/patient/history')
-                .then(res => res.json())
-                .then(data => {
-                    const report = data.history[index];
-                    if (report) {
-                        alert(`
-Report Date: ${report.date}
-Problem/Finding: ${report.summary.substring(0, 300)}...
-
-Full Analysis: ${report.full_analysis.substring(0, 500)}...
-
-Click "View Full Report" on the report card to see complete details.
-                        `);
-                    }
-                });
-        }
-    </script>
 </body>
 </html>
