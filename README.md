@@ -327,14 +327,9 @@ response = ollama.chat(
 
 ---
 
-## 📄 License
 
-SmartHealth - Medical AI Analysis Platform
-© 2024 AI Shield Health
 
----
-
-## 🤝 Support
+--## 🤝 Support
 
 For issues or questions:
 1. Check OLLAMA_SETUP.md for Ollama help
